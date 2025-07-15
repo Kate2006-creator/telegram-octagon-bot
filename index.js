@@ -1,4 +1,6 @@
 ﻿const TelegramBot = require('node-telegram-bot-api');
+const { getRandomItem, deleteItemById, getItemById, pool } = require('./app'); // Импортируем функции из app.js
+
 
 const token = '7793508677:AAGO05PY191gZt1_EEDw0V_tTQ1bDsQzGY0';
 
@@ -27,6 +29,54 @@ bot.onText(/\/creator/, (msg) => {
   const chatId = msg.chat.id;
   bot.sendMessage(chatId, 'Создатель бота: Кутявина Екатерина Сергеевна');
 });
+
+// Команда /randomItem
+bot.onText(/\/randomItem/, async (msg) => {
+    const chatId = msg.chat.id;
+    const item = await getRandomItem();
+    if (item) {
+        bot.sendMessage(chatId, `(${item.id}) - ${item.name}: ${item.desc}`);
+    } else {
+        bot.sendMessage(chatId, 'В базе данных нет предметов.');
+    }
+});
+
+// Команда /deleteItem
+bot.onText(/\/deleteItem (.+)/, async (msg, match) => {
+    const chatId = msg.chat.id;
+    const itemId = parseInt(match[1], 10);
+
+    if (isNaN(itemId)) {
+        bot.sendMessage(chatId, 'Ошибка: Неверный формат ID.');
+        return;
+    }
+
+    const success = await deleteItemById(itemId);
+    if (success) {
+        bot.sendMessage(chatId, 'Удачно');
+    } else {
+        bot.sendMessage(chatId, 'Ошибка: Предмет с таким ID не найден.');
+    }
+});
+
+// Команда /getItemByID
+bot.onText(/\/getItemByID (.+)/, async (msg, match) => {
+    const chatId = msg.chat.id;
+    const itemId = parseInt(match[1], 10);
+
+    if (isNaN(itemId)) {
+        bot.sendMessage(chatId, 'Ошибка: Неверный формат ID.');
+        return;
+    }
+
+    const item = await getItemById(itemId);
+    if (item) {
+        bot.sendMessage(chatId, `(${item.id}) - ${item.name}: ${item.desc}`);
+    } else {
+        bot.sendMessage(chatId, 'Ошибка: Предмет с таким ID не найден.');
+    }
+});
+
 
 bot.on('message', (msg) => {
   const chatId = msg.chat.id;
